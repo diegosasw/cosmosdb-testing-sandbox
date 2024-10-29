@@ -12,15 +12,18 @@ public class CosmosService
     public CosmosService(CosmosClient cosmosClient)
         => _cosmosClient = cosmosClient;
     
-    public async Task<CosmosOperationResult> InsertDocumentAsync<T>(string databaseName, string containerName, T document, CancellationToken cancellationToken)
+    public async Task<CosmosOperationResult> InsertDocumentAsync(string databaseName, string containerName, CosmosDbDocument document, CancellationToken cancellationToken)
     {
         try
         {
             var container = _cosmosClient.GetDatabase(databaseName).GetContainer(containerName);
-            var result = await container.CreateItemAsync(document, cancellationToken: cancellationToken);
-            return result.StatusCode is HttpStatusCode.OK or HttpStatusCode.Created 
+            var itemResponse = await container.CreateItemAsync(
+                item: document,
+                partitionKey: new PartitionKey(document.id),
+                cancellationToken: cancellationToken);
+            return itemResponse.StatusCode is HttpStatusCode.OK or HttpStatusCode.Created 
                 ? CosmosOperationResult.Success() 
-                : CosmosOperationResult.Error($"Failed to insert document {document} in {containerName}. Error code {result.StatusCode}");
+                : CosmosOperationResult.Error($"Failed to insert document {document} in {containerName}. Error code {itemResponse.StatusCode}");
         }
         catch (Exception exception)
         {

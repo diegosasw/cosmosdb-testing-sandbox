@@ -28,8 +28,9 @@ public class CommandHandler
         
         var databaseName = _cosmosDbSettings.DatabaseName;
         var containerName = GetRandomValue(CosmosDbSettings.ContainerNames);
+        var document = new CosmosDbDocument(Guid.NewGuid().ToString(), commandHttpRequest.Text, DateTime.UtcNow);
         var cosmosOperationResult = 
-            await _cosmosService.InsertDocumentAsync(databaseName, containerName, commandHttpRequest, cancellationToken);
+            await _cosmosService.InsertDocumentAsync(databaseName, containerName, document, cancellationToken);
         if (cosmosOperationResult.IsSuccessful)
         {
             return TypedResults.Ok(new CommandHttpResponse(databaseName, containerName, commandHttpRequest));
