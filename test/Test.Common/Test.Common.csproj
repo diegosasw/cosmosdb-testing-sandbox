@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.10" />
+      <PackageReference Include="Testcontainers.CosmosDb" Version="3.10.0" />
+      <PackageReference Include="Testcontainers.RabbitMq" Version="3.10.0" />
+      <PackageReference Include="xRetry" Version="1.9.0" />
+      <PackageReference Include="xunit.extensibility.core" Version="2.9.2" />
+    </ItemGroup>
+
+</Project>
