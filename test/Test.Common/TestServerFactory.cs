@@ -2,14 +2,15 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Sample.Api.CosmosDb;
+using Test.Common.Extensions;
 
 namespace Test.Common;
 
 public static class TestServerFactory
 {
     public static WebApplicationFactory<TEntryPoint> CreateWebApplicationFactory<TEntryPoint>(
-        string testId, 
-        string testDatabaseName,
+        string testId,
         Action<IServiceCollection, string>? testServices = default)
         where TEntryPoint : class
     {

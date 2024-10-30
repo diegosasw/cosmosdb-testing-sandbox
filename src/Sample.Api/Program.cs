@@ -90,3 +90,10 @@ async Task AutoProvisionCosmosDb(IServiceProvider serviceProvider)
         }
     }
 }
+
+// Explicit namespace and partial class Program to reference from tests
+namespace Sample.Api
+{
+    // ReSharper disable once PartialTypeWithSinglePart
+    public abstract partial class Program;
+}
