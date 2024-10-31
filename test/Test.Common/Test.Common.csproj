@@ -4,6 +4,8 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>false</IsTestProject>
     </PropertyGroup>
 
     <ItemGroup>
@@ -12,7 +14,6 @@
       <PackageReference Include="Testcontainers.CosmosDb" Version="3.10.0" />
       <PackageReference Include="Testcontainers.RabbitMq" Version="3.10.0" />
       <PackageReference Include="xRetry" Version="1.9.0" />
-      <PackageReference Include="xunit.extensibility.core" Version="2.9.2" />
     </ItemGroup>
 
     <ItemGroup>
