@@ -17,8 +17,8 @@ public abstract class TestServerBase<TEntryPoint>
     private readonly TestContainerFixture _fixture;
     private readonly ITestOutputHelper _output;
 
-    protected HttpClient HttpClient 
-    => _webApplicationFactory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+    protected HttpClient HttpClient
+        => _webApplicationFactory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
     
     private readonly WebApplicationFactory<TEntryPoint> _webApplicationFactory;
     private readonly IServiceProvider _services;
@@ -28,6 +28,8 @@ public abstract class TestServerBase<TEntryPoint>
         _testId = testId;
         _fixture = fixture;
         _output = output;
+
+        var cosmosDbTestContainerResult = fixture.CosmosDbTestContainerResult;
         
         _webApplicationFactory = 
             TestServerFactory.CreateWebApplicationFactory<TEntryPoint>(
@@ -49,10 +51,10 @@ public abstract class TestServerBase<TEntryPoint>
                         new CosmosClientOptions
                         {
                             ConnectionMode = ConnectionMode.Gateway,
-                            HttpClientFactory = () => fixture.CosmosDbHttpClient
+                            HttpClientFactory = cosmosDbTestContainerResult.HttpClient
                         };
                     
-                    var cosmosDbTestClient = new CosmosClient(fixture.CosmosDbConnectionString, cosmosClientTestOptions);
+                    var cosmosDbTestClient = new CosmosClient(cosmosDbTestContainerResult.ConnectionString, cosmosClientTestOptions);
                     
                     sc.ReplaceService(cosmosDbTestClient);
                     

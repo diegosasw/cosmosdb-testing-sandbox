@@ -1,4 +1,5 @@
-﻿using Xunit;
+﻿using System.Diagnostics.Contracts;
+using Xunit;
 
 namespace Test.Common;
 
@@ -13,9 +14,11 @@ public abstract class GivenWhenThen
 
     public Task DisposeAsync() => Cleanup();
 
-    protected abstract Task Given();
+    protected virtual Task Given()
+        => Task.CompletedTask;
 
-    protected abstract Task When();
+    protected virtual Task When()
+        => Task.CompletedTask;
 
     protected virtual Task Cleanup()
         => Task.CompletedTask;

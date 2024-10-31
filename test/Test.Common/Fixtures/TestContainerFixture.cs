@@ -1,4 +1,5 @@
-﻿using Testcontainers.CosmosDb;
+﻿using Test.Common.TestContainers;
+using Testcontainers.CosmosDb;
 using Xunit;
 
 // ReSharper disable ClassNeverInstantiated.Global
@@ -8,24 +9,15 @@ namespace Test.Common.Fixtures;
 public class TestContainerFixture
     : IAsyncLifetime
 {
-    public string CosmosDbConnectionString { get; private set; } = null!;
-    public HttpClient CosmosDbHttpClient => new(_cosmosDbHttpMessageHandler, disposeHandler: false);
+    public CosmosDbTestContainerResult CosmosDbTestContainerResult { get; private set; } = null!;
     
-    private CosmosDbContainer _cosmosDbContainer = null!;
-    private HttpMessageHandler _cosmosDbHttpMessageHandler = null!;
-    
+    private CosmosDbTestContainer? _cosmosDbTestContainer;
+
     public async Task InitializeAsync()
     {
-        _cosmosDbContainer = 
-            new CosmosDbBuilder()
-                .WithEnvironment("AZURE_COSMOS_EMULATOR_IP_ADDRESS_OVERRIDE","127.0.0.1")
-                .WithEnvironment("AZURE_COSMOS_EMULATOR_ENABLE_DATA_PERSISTENCE", "false")
-                .WithEnvironment("AZURE_COSMOS_EMULATOR_PARTITION_COUNT", "12")
-                .Build();
-        await _cosmosDbContainer.StartAsync();
-        CosmosDbConnectionString = _cosmosDbContainer.GetConnectionString();
-        _cosmosDbHttpMessageHandler = _cosmosDbContainer.HttpMessageHandler;
+        _cosmosDbTestContainer = new CosmosDbTestContainer();
+        CosmosDbTestContainerResult = await _cosmosDbTestContainer.Start();
     }
 
-    public Task DisposeAsync() => _cosmosDbContainer.StopAsync();
+    public Task DisposeAsync() => _cosmosDbTestContainer?.Stop() ?? Task.CompletedTask;
 }
