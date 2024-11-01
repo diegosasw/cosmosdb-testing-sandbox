@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.Contracts;
-using Xunit;
+﻿using Xunit;
 
 namespace Test.Common;
 
@@ -8,12 +7,16 @@ public abstract class GivenWhenThen
 {
     public async Task InitializeAsync()
     {
+        await PreConditions();
         await Given();
         await When();
     }
 
     public Task DisposeAsync() => Cleanup();
-
+    
+    protected virtual Task PreConditions()
+        => Task.CompletedTask;
+    
     protected virtual Task Given()
         => Task.CompletedTask;
 

@@ -64,7 +64,21 @@ public abstract class TestServerBase<TEntryPoint>
         _services = _webApplicationFactory.Services.CreateScope().ServiceProvider;
         output.WriteLine($"Running test {testId} on CosmosDb server");
     }
-    
+
+    protected sealed override async Task PreConditions()
+    {
+        await base.PreConditions();
+
+        var cosmosManager = _services.GetRequiredService<CosmosManager>();
+        var cosmosSettings = _services.GetRequiredService<CosmosDbSettings>();
+        foreach (var containerName in CosmosDbSettings.ContainerNames)
+        {
+            _output.WriteLine($"Clearing container {containerName}");
+            await cosmosManager.ClearContainerAsync(cosmosSettings.DatabaseName, containerName);
+            _output.WriteLine($"Container {containerName} cleared");
+        }
+    }
+
     protected virtual void TestServices(IServiceCollection services, string testId)
     {
     }
