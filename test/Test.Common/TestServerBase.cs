@@ -16,6 +16,7 @@ public abstract class TestServerBase<TEntryPoint>
     private readonly string _testId;
     private readonly TestContainerFixture _fixture;
     private readonly ITestOutputHelper _output;
+    private readonly bool _clearContainers;
 
     protected HttpClient HttpClient
         => _webApplicationFactory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
@@ -23,11 +24,12 @@ public abstract class TestServerBase<TEntryPoint>
     private readonly WebApplicationFactory<TEntryPoint> _webApplicationFactory;
     private readonly IServiceProvider _services;
 
-    protected TestServerBase(string testId, TestContainerFixture fixture, ITestOutputHelper output)
+    protected TestServerBase(string testId, TestContainerFixture fixture, ITestOutputHelper output, bool clearContainers)
     {
         _testId = testId;
         _fixture = fixture;
         _output = output;
+        _clearContainers = clearContainers;
 
         var cosmosDbTestContainerResult = fixture.CosmosDbTestContainerResult;
         
@@ -68,6 +70,11 @@ public abstract class TestServerBase<TEntryPoint>
     protected sealed override async Task PreConditions()
     {
         await base.PreConditions();
+
+        if (!_clearContainers)
+        {
+            return;
+        }
 
         var cosmosManager = _services.GetRequiredService<CosmosManager>();
         var cosmosSettings = _services.GetRequiredService<CosmosDbSettings>();

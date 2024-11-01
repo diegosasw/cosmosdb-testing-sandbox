@@ -6,5 +6,5 @@ using Xunit.Abstractions;
 namespace IntegrationTests.Contracts;
 
 [Collection("Integration")]
-public abstract class IntegrationTestBase(TestContainerFixture fixture, ITestOutputHelper output)
-    : TestServerBase<Program>(Guid.NewGuid().ToString("N"), fixture, output);
+public abstract class IntegrationTestBase(TestContainerFixture fixture, ITestOutputHelper output, bool clearContainers = false)
+    : TestServerBase<Program>(Guid.NewGuid().ToString("N"), fixture, output, clearContainers);

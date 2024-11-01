@@ -49,6 +49,43 @@ public static class InsertDocumentTests
         }
     }
     
+    public class GivenDatabaseAvailableAndTheoryAndClearingContainers(TestContainerFixture fixture, ITestOutputHelper output) 
+        : IntegrationTestBase(fixture, output, clearContainers: true)
+    {
+        [RetryTheory]
+        [InlineData("one")]
+        [InlineData("two")]
+        [InlineData("three")]
+        [InlineData("four")]
+        [InlineData("five")]
+        [InlineData("six")]
+        [InlineData("seven")]
+        [InlineData("eight")]
+        [InlineData("nine")]
+        [InlineData("ten")]
+        [InlineData("eleven")]
+        [InlineData("twelve")]
+        [InlineData("thirteen")]
+        [InlineData("fourteen")]
+        [InlineData("fifteen")]
+        [InlineData("sixteen")]
+        [InlineData("seventeen")]
+        [InlineData("eighteen")]
+        [InlineData("nineteen")]
+        [InlineData("twenty")]
+        public async Task Create_Container_Should_Succeed(string text)
+        {
+            var documentId = Guid.NewGuid().ToString();
+            var createdOn = DateTime.UtcNow;
+            var document = new CosmosDbDocument(documentId, text, createdOn);
+            var response = await HttpClient.PostAsJsonAsync("runsample", document);
+            var commandHttpResponse = await response.ToPayload<CommandHttpResponse>();
+
+            response.Should().BeSuccessful();
+            commandHttpResponse.Payload.Text.Should().Be(document.text);
+        }
+    }
+    
     public class GivenDatabaseAvailableAndGivenWhenThenApproach(TestContainerFixture fixture, ITestOutputHelper output) 
         : IntegrationTestBase(fixture, output)
     {
