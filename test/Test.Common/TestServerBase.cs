@@ -30,39 +30,12 @@ public abstract class TestServerBase<TEntryPoint>
         _fixture = fixture;
         _output = output;
         _clearContainers = clearContainers;
-
-        var cosmosDbTestContainerResult = fixture.CosmosDbTestContainerResult;
         
         _webApplicationFactory = 
             TestServerFactory.CreateWebApplicationFactory<TEntryPoint>(
                 testId, 
-                (sc, id) =>
-                {
-                    // Overriding infrastructure services
-                    var cosmosDbTestSettings =
-                        new CosmosDbSettings
-                        {
-                            AccountEndpoint = string.Empty, // unused for test
-                            PrimaryKey = string.Empty, // unused for test,
-                            DatabaseName = "test-database"
-                        };
-                    
-                    sc.ReplaceService(cosmosDbTestSettings);
-                    
-                    var cosmosClientTestOptions =
-                        new CosmosClientOptions
-                        {
-                            ConnectionMode = ConnectionMode.Gateway,
-                            HttpClientFactory = cosmosDbTestContainerResult.HttpClient
-                        };
-                    
-                    var cosmosDbTestClient = new CosmosClient(cosmosDbTestContainerResult.ConnectionString, cosmosClientTestOptions);
-                    
-                    sc.ReplaceService(cosmosDbTestClient);
-                    
-                    // Additional Test Services    
-                    TestServices(sc, id);
-                });
+                fixture.CosmosDbTestContainerResult,
+                TestServices);
         _services = _webApplicationFactory.Services.CreateScope().ServiceProvider;
         output.WriteLine($"Running test {testId} on CosmosDb server");
     }
