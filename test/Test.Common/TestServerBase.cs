@@ -1,9 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Sample.Api.CosmosDb;
-using Test.Common.Extensions;
 using Test.Common.Fixtures;
 using Xunit.Abstractions;
 
@@ -13,8 +10,6 @@ public abstract class TestServerBase<TEntryPoint>
     : GivenWhenThen
     where TEntryPoint : class
 {
-    private readonly string _testId;
-    private readonly TestContainerFixture _fixture;
     private readonly ITestOutputHelper _output;
     private readonly bool _clearContainers;
 
@@ -26,8 +21,6 @@ public abstract class TestServerBase<TEntryPoint>
 
     protected TestServerBase(string testId, TestContainerFixture fixture, ITestOutputHelper output, bool clearContainers)
     {
-        _testId = testId;
-        _fixture = fixture;
         _output = output;
         _clearContainers = clearContainers;
         

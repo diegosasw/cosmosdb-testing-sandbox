@@ -1,5 +1,4 @@
 ﻿using Test.Common.TestContainers;
-using Testcontainers.CosmosDb;
 using Xunit;
 
 // ReSharper disable ClassNeverInstantiated.Global
