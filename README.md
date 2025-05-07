@@ -19,3 +19,4 @@ dotnet test
 The tests will run a TestContainer for CosmosDb emulator once before all tests, the tests will run sequentially and then the docker container will be destroyed
 Play with the CosmosDb configuration, the `AZURE_COSMOS_EMULATOR_PARTITION_COUNT`, etc. and observe how unreliable the CosmosDb emulator is.
 Add heavier load to the tests and observe `Too Many Request` and other server errors.
+
