@@ -1,124 +1,94 @@
-﻿using System.Net.Http.Json;
-using FluentAssertions;
 using IntegrationTests.Contracts;
-using Sample.Api;
-using Sample.Api.CosmosDb;
-using Test.Common.Extensions;
+using Sample.ConsoleApp;
+using Test.Common;
 using Test.Common.Fixtures;
-using xRetry;
-using Xunit.Abstractions;
 
 namespace IntegrationTests;
 
-public static class InsertDocumentTests
+public sealed class InsertDocumentTests : IntegrationTestBase
 {
-    public class GivenDatabaseAvailableAndTheory(TestContainerFixture fixture, ITestOutputHelper output) 
-        : IntegrationTestBase(fixture, output)
+    [Test]
+    [Arguments("one")]
+    [Arguments("two")]
+    [Arguments("three")]
+    public async Task Each_case_inserts_into_its_own_database(string text)
     {
-        [RetryTheory]
-        [InlineData("one")]
-        [InlineData("two")]
-        [InlineData("three")]
-        [InlineData("four")]
-        [InlineData("five")]
-        [InlineData("six")]
-        [InlineData("seven")]
-        [InlineData("eight")]
-        [InlineData("nine")]
-        [InlineData("ten")]
-        [InlineData("eleven")]
-        [InlineData("twelve")]
-        [InlineData("thirteen")]
-        [InlineData("fourteen")]
-        [InlineData("fifteen")]
-        [InlineData("sixteen")]
-        [InlineData("seventeen")]
-        [InlineData("eighteen")]
-        [InlineData("nineteen")]
-        [InlineData("twenty")]
-        public async Task Create_Container_Should_Succeed(string text)
+        await RunWithEmulatorAsync(async connection =>
         {
-            var documentId = Guid.NewGuid().ToString();
-            var createdOn = DateTime.UtcNow;
-            var document = new CosmosDbDocument(documentId, text, createdOn);
-            var response = await HttpClient.PostAsJsonAsync("runsample", document);
-            var commandHttpResponse = await response.ToPayload<CommandHttpResponse>();
-
-            response.Should().BeSuccessful();
-            commandHttpResponse.Payload.Text.Should().Be(document.text);
-        }
+            var result = await CosmosSample.InsertAsync(connection, text);
+            await Assert.That(result.DatabaseName).IsEqualTo(connection.DatabaseName);
+            await Assert.That(result.ContainerName).IsEqualTo(CosmosSample.ContainerName);
+            await Assert.That(result.DocumentId).IsNotEmpty();
+            await Assert.That(result.Text).IsEqualTo(text);
+        }, DatabaseScope.PerTest);
     }
-    
-    public class GivenDatabaseAvailableAndTheoryAndClearingContainers(TestContainerFixture fixture, ITestOutputHelper output) 
-        : IntegrationTestBase(fixture, output, clearContainers: true)
+
+    [Test]
+    [Arguments("shared-one")]
+    [Arguments("shared-two")]
+    public async Task Class_scope_inserts_into_a_shared_database(string text)
     {
-        [RetryTheory]
-        [InlineData("one")]
-        [InlineData("two")]
-        [InlineData("three")]
-        [InlineData("four")]
-        [InlineData("five")]
-        [InlineData("six")]
-        [InlineData("seven")]
-        [InlineData("eight")]
-        [InlineData("nine")]
-        [InlineData("ten")]
-        [InlineData("eleven")]
-        [InlineData("twelve")]
-        [InlineData("thirteen")]
-        [InlineData("fourteen")]
-        [InlineData("fifteen")]
-        [InlineData("sixteen")]
-        [InlineData("seventeen")]
-        [InlineData("eighteen")]
-        [InlineData("nineteen")]
-        [InlineData("twenty")]
-        public async Task Create_Container_Should_Succeed(string text)
+        await RunWithEmulatorAsync(async connection =>
         {
-            var documentId = Guid.NewGuid().ToString();
-            var createdOn = DateTime.UtcNow;
-            var document = new CosmosDbDocument(documentId, text, createdOn);
-            var response = await HttpClient.PostAsJsonAsync("runsample", document);
-            var commandHttpResponse = await response.ToPayload<CommandHttpResponse>();
-
-            response.Should().BeSuccessful();
-            commandHttpResponse.Payload.Text.Should().Be(document.text);
-        }
+            var result = await CosmosSample.InsertAsync(connection, text);
+            await Assert.That(result.DatabaseName).IsEqualTo(connection.DatabaseName);
+            await Assert.That(result.Text).IsEqualTo(text);
+        }, DatabaseScope.PerClass);
     }
-    
-    public class GivenDatabaseAvailableAndGivenWhenThenApproach(TestContainerFixture fixture, ITestOutputHelper output) 
-        : IntegrationTestBase(fixture, output)
+}
+
+public sealed class DatabaseIsolationTests : IntegrationTestBase
+{
+    [Test]
+    public async Task Per_test_names_are_distinct_and_per_class_names_match()
     {
-        private CosmosDbDocument _document = null!;
-        private HttpResponseMessage _result = null!;
+        var testId = TestContext.Current!.Isolation.UniqueId;
+        await using var first = await Emulator.CreateDatabaseAsync(GetType(), testId, DatabaseScope.PerTest);
+        await using var second = await Emulator.CreateDatabaseAsync(GetType(), testId + 1_000_000, DatabaseScope.PerTest);
+        await using var classFirst = await Emulator.CreateDatabaseAsync(GetType(), testId, DatabaseScope.PerClass);
+        await using var classSecond = await Emulator.CreateDatabaseAsync(GetType(), testId + 1_000_000, DatabaseScope.PerClass);
+        await Assert.That(first.DatabaseName).IsNotEqualTo(second.DatabaseName);
+        await Assert.That(classFirst.DatabaseName).IsEqualTo(classSecond.DatabaseName);
+    }
+}
+
+public sealed class GivenWhenThenExample : IntegrationTestBase
+{
+    [Test]
+    public Task Document_is_inserted() => new InsertScenario(this).RunAsync();
+
+    private sealed class InsertScenario(GivenWhenThenExample owner) : GivenWhenThen
+    {
+        private string _text = null!;
+        private CosmosDatabaseLease _database = null!;
+        private InsertResult _result = null!;
+
+        public Task RunAsync() => RunScenarioAsync();
 
         protected override Task Given()
         {
-            var documentId = Guid.NewGuid().ToString();
-            const string text = "foo";
-            var createdOn = DateTime.UtcNow;
-            
-            _document = new CosmosDbDocument(documentId, text, createdOn);
-
+            _text = "scenario";
             return Task.CompletedTask;
         }
 
         protected override async Task When()
         {
-            _result = await HttpClient.PostAsJsonAsync("runsample", _document);
+            _database = await owner.Emulator.CreateDatabaseAsync(
+                owner.GetType(), TestContext.Current!.Isolation.UniqueId);
+            var connection = new CosmosEmulatorConnection(
+                _database.Connection.Endpoint, _database.Connection.AccountKey, _database.DatabaseName);
+            _result = await CosmosSample.InsertAsync(connection, _text);
         }
 
-        [RetryFact]
-        public void ThenItShouldReturnSuccess()
+        protected override async Task Then()
         {
-            _result.Should().BeSuccessful();
+            await Assert.That(_result.DatabaseName).IsEqualTo(_database.DatabaseName);
+            await Assert.That(_result.Text).IsEqualTo(_text);
         }
-        
-        [RetryFact]
-        public async Task ThenItShouldReturnExpectedResponse()
+
+        protected override async Task Cleanup()
         {
-            var commandHttpResponse = await _result.ToPayload<CommandHttpResponse>();
-            commandHttpResponse.Payload.Text.Should().Be(_document.text);
+            if (_database is not null) await _database.DisposeAsync();
         }
     }
 }

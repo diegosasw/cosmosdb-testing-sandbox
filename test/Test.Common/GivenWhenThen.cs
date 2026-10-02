@@ -1,28 +1,23 @@
-﻿using Xunit;
-
 namespace Test.Common;
 
 public abstract class GivenWhenThen
-    : IAsyncLifetime
 {
-    public async Task InitializeAsync()
+    protected async Task RunScenarioAsync()
     {
-        await PreConditions();
-        await Given();
-        await When();
+        try
+        {
+            await Given();
+            await When();
+            await Then();
+        }
+        finally
+        {
+            await Cleanup();
+        }
     }
 
-    public Task DisposeAsync() => Cleanup();
-    
-    protected virtual Task PreConditions()
-        => Task.CompletedTask;
-    
-    protected virtual Task Given()
-        => Task.CompletedTask;
-
-    protected virtual Task When()
-        => Task.CompletedTask;
-
-    protected virtual Task Cleanup()
-        => Task.CompletedTask;
+    protected virtual Task Given() => Task.CompletedTask;
+    protected virtual Task When() => Task.CompletedTask;
+    protected abstract Task Then();
+    protected virtual Task Cleanup() => Task.CompletedTask;
 }

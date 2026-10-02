@@ -1,10 +1,19 @@
-﻿using Sample.Api;
-using Test.Common;
+using Sample.ConsoleApp;
 using Test.Common.Fixtures;
-using Xunit.Abstractions;
 
 namespace IntegrationTests.Contracts;
 
-[Collection("Integration")]
-public abstract class IntegrationTestBase(TestContainerFixture fixture, ITestOutputHelper output, bool clearContainers = false)
-    : TestServerBase<Program>(Guid.NewGuid().ToString("N"), fixture, output, clearContainers);
+public abstract class IntegrationTestBase
+{
+    [ClassDataSource<CosmosEmulatorFixture>(Shared = SharedType.PerTestSession)]
+    public required CosmosEmulatorFixture Emulator { get; init; }
+
+    protected async Task RunWithEmulatorAsync(
+        Func<CosmosEmulatorConnection, Task> test, DatabaseScope? scope = null)
+    {
+        await using var database = await Emulator.CreateDatabaseAsync(
+            GetType(), TestContext.Current!.Isolation.UniqueId, scope);
+        await test(new CosmosEmulatorConnection(
+            database.Connection.Endpoint, database.Connection.AccountKey, database.DatabaseName));
+    }
+}

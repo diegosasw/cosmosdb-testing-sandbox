@@ -1,5 +1,5 @@
 ﻿// ReSharper disable InconsistentNaming
-namespace Sample.Api.CosmosDb;
+namespace Sample.ConsoleApp.CosmosDb;
 
 public record CosmosDbDocument(
     string id, 
